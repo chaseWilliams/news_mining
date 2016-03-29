@@ -1,25 +1,31 @@
 require 'rest-client'
-require 'json'
-url = "https://hooks.slack.com/services/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"
+require 'json_color'
+require 'rss'
+slack_url = "https://hooks.slack.com/services/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"
 puts
-pay = {
-    'username' => "ghost-bot",
-    'icon_emoji' => ":ghost:",
-    'text' => "this is a test"
-}
-pay = pay.to_json
-puts pay
-api_key = '71afeedbbc6287444bc2adf16897ec7ed2198bc4'
-base = "http://access.alchemyapi.com/calls/info/GetAPIKeyInfo?apikey=#{api_key}&outputMode=json"
-demo_endpoint = base
 
+feed_url = 'http://feeds.feedburner.com/TechCrunch/'
+RestClient.get feed_url do |rss|
+  feed = RSS::Parser.parse(rss)
+  puts feed.items.first.title
+  puts feed.items.first.link
+  @title = feed.items.first.title
+  @link = feed.items.first.link
+  puts "Title: #{feed.channel.title}"
+  #feed.items.each do |item|
+  #  puts "Item: #{item.title}"
+  #end
+end
 
-
-
+payload = {
+    'username' => "Feedr",
+    'icon_emoji' => ":gem:",
+    'text' => "This is a test:\n#{@title}\n#{@link}"
+}.to_json
 
 begin
-  puts RestClient.get demo_endpoint
-  puts 'success'
-rescue => e
+  RestClient.post slack_url, payload, content_type: 'application/json'
+rescue RestClient::InternalServerError => e
+  "500 error"
   puts e.response
 end
