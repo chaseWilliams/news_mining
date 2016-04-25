@@ -15,12 +15,16 @@ class Gram
     while str != nil
       puts "on count #{count}"
       char_arr = []
-      index = str.index /[ ^(A-Z)]/ #need to fix regex
+      index = str.index /[^a-zA-Z0-9]+/ #need to fix regex
       puts "The String is #{str} (#{str.length}), index is #{index}"
       if index == nil
         index = str.length
       end
-      str[0..index-1].each_char {|c| char_arr << c }
+      str[0..index-1].each_char {|c| 
+        unless (c.index  /([^a-zA-Z0-9])+/).class == nil
+         char_arr << c 
+        end
+      }
       print "The char array is #{char_arr}\n"
       arr << char_arr
       puts arr.length
@@ -51,3 +55,4 @@ end
 
 gram = Gram.new('this; is your. young, master chase', 3)
 print gram.n_gram
+puts "\n"
