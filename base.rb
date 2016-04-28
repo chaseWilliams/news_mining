@@ -13,7 +13,7 @@ RestClient.get feed_url do |rss|
   @link = feed.items.first.link
   puts "Title: #{feed.channel.title}"
   #feed.items.each do |item|
-  #  puts "Item: #{item.title}"
+    puts "Item: #{feed.items.first}"
   #end
 end
 
@@ -23,9 +23,9 @@ payload = {
     'text' => "This is a test:\n#{@title}\n#{@link}"
 }.to_json
 
-begin
-  RestClient.post slack_url, payload, content_type: 'application/json'
-rescue RestClient::InternalServerError => e
-  "500 error"
-  puts e.response
-end
+#begin
+#  RestClient.post slack_url, payload, content_type: 'application/json'
+#rescue RestClient::InternalServerError => e
+#  "500 error"
+#  puts e.response
+#end
