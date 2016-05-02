@@ -1,20 +1,19 @@
 require 'rest-client'
 require 'json_color'
 require 'rss'
+require './k-gram.rb'
 slack_url = "https://hooks.slack.com/services/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"
-puts
 
 feed_url = 'http://feeds.feedburner.com/TechCrunch/'
 RestClient.get feed_url do |rss|
   feed = RSS::Parser.parse(rss)
   puts feed.items.first.title
   puts feed.items.first.link
-  @title = feed.items.first.title
-  @link = feed.items.first.link
-  puts "Title: #{feed.channel.title}"
-  #feed.items.each do |item|
-    puts "Item: #{feed.items.first}"
-  #end
+  title = feed.items.first.title
+  link = feed.items.first.link
+  puts feed.items.first.description
+  #gram = new Gram.new(feed.items.first.description, 3)
+  puts gram.ngram
 end
 
 payload = {
