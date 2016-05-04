@@ -1,5 +1,5 @@
-require 'ngram'
+# this is where POS and other advances sentiment analysis algorithms where go
+module NLP
 
-ngram = NGram.new
+end
 
-puts ngram.parse "hello_ it is me"

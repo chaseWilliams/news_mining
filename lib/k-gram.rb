@@ -1,45 +1,62 @@
-
+require 'csv'
+require 'stopwords'
 class Gram
   attr_reader :n_gram, :tagged
 
   def initialize str, k
     @n_gram = Array.new
     @tagged = Hash.new
-    process str, k
-  end
-
-  def process str, k
-    @n_gram[@n_gram.length] = parse(tokenize(str), k)
-    puts "final result is #{@n_gram}"
-    temp_hash = tag
-    temp_hash.each do |key, value|
-      @tagged.store key, value
-    end
-    puts "tagged words are #{@tagged}"
+    @length = k
+    process str
   end
 
   private
 
+  def process str
+    puts "\nprocessing"
+    # first tokenize, then subdivide the string into words of @length long
+    parse(tokenize str)
+    # primarily focuses on eliminating grams with stop words
+    initial_prune
+    # safely store the tagged arrays - effectively reduces n-gram's depth ([[[]]] -> [[]])
+    tag.each do |key, value|
+      @tagged.store key, value
+    end
+  end
+
+  # handles stop words, and potentially POS (part of speech)
+  # later on will need to change to instead of discarding, demoting k-gram to k-1-gram
+  # EX - "the black death" -> "black death"
+  def initial_prune
+    puts "\npruning"
+    temp_arr = Array.new
+    csv_path = File.expand_path('../words/en.csv', __FILE__)
+    stopwords = CSV.read(csv_path)[0] #it all combines into one sub array anyway
+    sieve = Stopwords::Filter.new stopwords
+    @n_gram.each do |words|
+      unless (sieve.filter(words)).length < @length
+        temp_arr << words
+      end
+    end
+    @n_gram = temp_arr
+  end
+
   def tag
-    puts "tagging!"
-    tagged_arr = Hash.new;
+    puts "\ntagging"
+    tagged_arr = Hash.new
     @n_gram.each_with_index do |item, index|
-      puts "comparing item #{item} at index #{index}"
       item_count = count index
-      puts item_count
       if item_count > 1
-        puts "item count greater than one! (#{item})"
         unless equals tagged_arr, item
-          puts "adding new item #{item}"
           tagged_arr[item.clone] = item_count
         end
       end
     end
-    puts "the tagged array is #{tagged_arr}"
     tagged_arr
   end
 
   def tokenize str
+    puts "\ntokenizing"
     arr = Array.new
     while str != nil
       char_arr = []
@@ -53,7 +70,6 @@ class Gram
         is_matched = true
       end
       while index == 0 && is_matched
-        puts "entered loop for guarding against index 0"
         str.slice! 0
         index = str.index /[^a-zA-Z0-9]+/
       end
@@ -63,28 +79,23 @@ class Gram
          char_arr << c
         end
       end
-      print "The char array is #{char_arr}\n"
       arr << char_arr
-      puts arr.length
-      print "Final array is #{arr}\n"
       str = str.slice (index + 1)..(str.length() - 1)
     end
     arr
   end
 
-  def parse tokens, k  #k is number of words per sub-array
-    arr = []
+  def parse tokens
+    puts "\nparsing"
     pos = 0
-    while pos < tokens.length - k + 1
+    while pos < tokens.length - @length + 1
       word_arr = []
-      (0..(k-1)).each do |increment|
+      (0..(@length-1)).each do |increment|
         word_arr << tokens[pos + increment].to_str
       end
-      puts "word array is #{word_arr}"
-      arr << word_arr
+      @n_gram << word_arr
       pos += 1
     end
-    arr
   end
 
   def count index
@@ -104,6 +115,6 @@ class Gram
         return true
       end
     end
-    return false
+    false
   end
 end
