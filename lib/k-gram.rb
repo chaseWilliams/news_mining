@@ -1,16 +1,27 @@
 require 'csv'
 require 'stopwords'
 class Gram
-  attr_reader :n_gram, :tagged
+  attr_reader :grams, :tagged
 
-  def initialize str, k
-    @n_gram = Array.new
+  def initialize str
+    @grams = {
+      2 => Array.new,
+      3 => Array.new,
+      4 => Array.new
+    }
     @tagged = Hash.new
-    @length = k
     process str
   end
 
   private
+
+  def speak
+    @grams.each do |num, arr|
+      puts num
+      print arr
+      puts "\n"
+    end
+  end
 
   def process str
     puts "\nprocessing"
@@ -24,31 +35,21 @@ class Gram
     end
   end
 
-  # handles stop words, and potentially POS (part of speech)
+  # needs to handle stop words, and potentially POS (part of speech)
   # later on will need to change to instead of discarding, demoting k-gram to k-1-gram
   # EX - "the black death" -> "black death"
-  def initial_prune
-    puts "\npruning"
-    temp_arr = Array.new
-    csv_path = File.expand_path('../words/en.csv', __FILE__)
-    stopwords = CSV.read(csv_path)[0] #it all combines into one sub array anyway
-    sieve = Stopwords::Filter.new stopwords
-    @n_gram.each do |words|
-      unless (sieve.filter(words)).length < @length
-        temp_arr << words
-      end
-    end
-    @n_gram = temp_arr
-  end
+  
 
   def tag
     puts "\ntagging"
     tagged_arr = Hash.new
-    @n_gram.each_with_index do |item, index|
-      item_count = count index
-      if item_count > 1
-        unless equals tagged_arr, item
-          tagged_arr[item.clone] = item_count
+    (2..4).each do |k|
+      @grams[k].each_with_index do |item, index|
+        item_count = count index, k
+        if item_count > 1
+          unless equals tagged_arr, item
+            tagged_arr[item.clone] = item_count
+          end
         end
       end
     end
@@ -57,6 +58,7 @@ class Gram
 
   def tokenize str
     puts "\ntokenizing"
+    str = remove_stopwords str
     arr = Array.new
     while str != nil
       char_arr = []
@@ -85,23 +87,38 @@ class Gram
     arr
   end
 
+  def remove_stopwords str
+    csv_path = File.expand_path('../words/en.csv', __FILE__)
+    stopwords = CSV.read(csv_path)[0] #it all combines into one sub array anyway
+    sieve = Stopwords::Filter.new stopwords
+    new_arr = sieve.filter str.split
+    result = String.new
+    new_arr.each do |elem|
+      result << elem + ' '
+    end
+    result.chomp(' ')
+  end
+
   def parse tokens
     puts "\nparsing"
     pos = 0
-    while pos < tokens.length - @length + 1
-      word_arr = []
-      (0..(@length-1)).each do |increment|
-        word_arr << tokens[pos + increment].to_str
+    (2..4).each do |k|
+      while pos < tokens.length - k + 1
+        word_arr = []
+        (0..(k-1)).each do |increment|
+          word_arr << tokens[pos + increment].to_str
+        end
+        @grams[k] << word_arr
+        pos += 1
       end
-      @n_gram << word_arr
-      pos += 1
+      pos = 0
     end
   end
 
-  def count index
+  def count index, k
     sum = 0
-    test = @n_gram[index]
-    @n_gram.each do |arr|
+    test = @grams[k][index]
+    @grams[k].each do |arr|
       if arr == test
         sum += 1
       end

@@ -3,9 +3,10 @@ require 'json'
 require 'rss'
 require './lib/k-gram.rb'
 require './lib/array_extension.rb'
+require './lib/wiki.rb'
 
-hash = Hash.new
+
 file = IO.read './test_txt'
-gram = Gram.new(file, 2)
-print gram.tagged
-puts "\n"
+gram = Gram.new(file)
+puts gram.tagged
+puts Wiki.validate gram
